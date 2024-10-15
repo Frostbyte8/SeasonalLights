@@ -1,5 +1,3 @@
-# Easy Make
+# Seasonal Lights
 
-Generates project and solution files for Visual Studio. Largely incomplete.
-
-Currently only supports Visual Studio 2008."# SeasonalLights" 
+Put lights around your monitor like it's 1995!
