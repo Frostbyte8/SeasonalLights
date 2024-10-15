@@ -254,8 +254,21 @@ void MainWindow::loadGIF() {
 
     bulb.loadBulb("D:\\dump\\12.bul");
     bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
+
+    // TODO: Need a way to get the width/height, and the number of Sub-Bulbs each bulb has
+
+    const BulbInfo* bInfo = bulb.getSideInfo(SideID::TOP, 0);
+    size_t numBulbs = length[0] / bInfo->width;
+
+    for(size_t i = 0; i < numBulbs; ++i) {
+        BulbT bulbType;
+        const BulbInfo* info = bulb.getSideInfo(SideID::TOP, i);
+        bulbType.bulbInfo = info;
+        sideBulbs[0].push_back(bulbType);
+    }
     
-    bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
+    //bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
+    /*
     bulbSideTest[1].bulbInfo = bulb.getSideInfo(SideID::LEFT, 0);
     bulbSideTest[3].bulbInfo = bulb.getSideInfo(SideID::BOTTOM, 0);
     bulbSideTest[4].bulbInfo = bulb.getSideInfo(SideID::RIGHT, 0);
@@ -269,6 +282,7 @@ void MainWindow::loadGIF() {
     length[1] = length[1] - (bulbCornerTest[0].bulbInfo->height + bulbCornerTest[2].bulbInfo->height);
     length[2] = length[2] - (bulbCornerTest[2].bulbInfo->width + bulbCornerTest[3].bulbInfo->width);
     length[3] = length[3] - (bulbCornerTest[1].bulbInfo->height + bulbCornerTest[3].bulbInfo->height);
+    */
 
     //bulbTest.bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
 
@@ -316,7 +330,7 @@ void MainWindow::loadGIF() {
 
 bool MainWindow::OnPaint() {
 
-    if(bulbSideTest[0].bulbInfo == NULL || bulbSideTest[0].bulbInfo->frames.empty()) {
+    if(sideBulbs[0][0].bulbInfo == NULL || sideBulbs[0][0].bulbInfo->frames.empty()) {
         return true;
     }
 
@@ -428,14 +442,21 @@ bool MainWindow::OnPaint() {
     }
     */
 
-    D2D1_RECT_F dest1 = { bulbCornerTest[1].bulbInfo->width, 0, bulbSideTest[0].bulbInfo->width, bulbSideTest[0].bulbInfo->height };
+    D2D1_RECT_F dest1 = { 32, 0, sideBulbs[0][0].bulbInfo->width, sideBulbs[0][0].bulbInfo->height };
     dest1.right += dest1.left;
-    const int numBulbs = length[0] / bulbSideTest[0].bulbInfo->width;
+    const int numBulbs = length[0] / sideBulbs[0][0].bulbInfo->width;
     
+    int k = 0;
+
     for(int i = 0; i < numBulbs; ++i) {
-        dxInfo->dc->DrawBitmap(bulbSideTest[0].bulbInfo->frames[bulbSideTest[0].currentFrame], &dest1);
-        dest1.left += bulbSideTest[0].bulbInfo->width;
-        dest1.right += bulbSideTest[0].bulbInfo->width;
+        dxInfo->dc->DrawBitmap(sideBulbs[0][k].bulbInfo->frames[sideBulbs[0][k].currentFrame], &dest1);
+        dest1.left += sideBulbs[0][k].bulbInfo->width;
+        dest1.right += sideBulbs[0][k].bulbInfo->width;
+
+        k++;
+        if (k >= sideBulbs[0].size()) {
+            k = 0;
+        }
     }
     
     HRESULT status = dxInfo->dc->EndDraw();
@@ -481,14 +502,18 @@ void MainWindow::initBulbs() {
 
 void MainWindow::updateBulbs() {
 
-    if(bulbSideTest[0].bulbInfo == NULL) {
-        return;
-    }
 
-    if(bulbSideTest[0].currentFrame == bulbSideTest[0].bulbInfo->frames.size() - 1) {
-        bulbSideTest[0].currentFrame = 0;
-    } else {
-        bulbSideTest[0].currentFrame++;
+    const size_t numBulbs = sideBulbs[0].size();
+
+    for(int i = 0; i < numBulbs; ++i) {
+        if(sideBulbs[0][i].bulbInfo != NULL) {
+            if(sideBulbs[0][i].currentFrame == sideBulbs[0][i].bulbInfo->frames.size() - 1) {
+                sideBulbs[0][i].currentFrame = 0;
+            }
+            else {
+                sideBulbs[0][i].currentFrame++;
+            }
+        }
     }
 
     /*

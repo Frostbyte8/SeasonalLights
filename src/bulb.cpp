@@ -26,6 +26,7 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
     ID2D1Bitmap*            d2dBMP          = NULL;
 
     // TOOD: Error Checking
+    // TODO: Sprite Sheets instead of using a bitmap for every gif frame
 
     const size_t numGifs = imageData.size();
 
@@ -62,6 +63,51 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
                 ID2D1Bitmap* bitmap = NULL;
 
+                UINT frameWidth;
+                UINT frameHeight;
+
+                decodedFrame->GetSize(&frameWidth, &frameHeight);
+
+                if(k != 0 && (frameWidth != bi.width || frameHeight != bi.height) ) {
+                   
+                    PROPVARIANT frameX;
+                    PROPVARIANT frameY;
+                    PropVariantInit(&frameX);
+                    PropVariantInit(&frameY);
+                    
+                    decodedMeta->GetMetadataByName(L"/imgdesc/Left", &frameX);
+                    decodedMeta->GetMetadataByName(L"/imgdesc/Top", &frameY);
+
+
+
+                    ID2D1Bitmap* prevFrame = bi.frames[k-1];
+                    D2D1_SIZE_U prevSize = { bi.width, bi.height };
+                    FLOAT dpiX;
+                    FLOAT dpiY;
+                    prevFrame->GetDpi(&dpiX, &dpiY);
+                    D2D1_BITMAP_PROPERTIES props = { prevFrame->GetPixelFormat(), dpiX, dpiY };
+                    
+                    dc->CreateBitmap(prevFrame->GetPixelSize(), props, &bitmap);
+
+                    bitmap->CopyFromBitmap(NULL, prevFrame, NULL);
+
+                    ID2D1Bitmap* tempBMP;
+                    dc->CreateBitmapFromWicBitmap(*(&formatConverter), NULL, &tempBMP);
+
+                    D2D1_POINT_2U dest = { frameX.intVal , frameY.intVal };
+                    
+
+                    bitmap->CopyFromBitmap(&dest, tempBMP, NULL);
+                    tempBMP->Release();
+                    tempBMP = NULL;
+                                           
+
+                }
+                else {
+                    dc->CreateBitmapFromWicBitmap(*(&formatConverter), NULL, &bitmap);
+                }
+
+
                 /*
                 TODO: combine/replace gifs correctly, even though that wasn't in the OG.
                 Simply copy the previous image, and then add the new data ontop of it.
@@ -74,12 +120,17 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
                 */             
 
-                dc->CreateBitmapFromWicBitmap(*(&formatConverter), NULL, &bitmap);
+                
 
                 bi.frames.push_back(bitmap);
 
+                decodedMeta->Release();
+                decodedMeta = NULL;
+                
                 decodedFrame->Release();  
                 decodedFrame        = NULL;
+
+                formatConverter->Release();
                 formatConverter     = NULL;
 
             }
@@ -143,7 +194,7 @@ int Bulb::loadBulb(const std::string& filePath) {
         fread(buf, sizeof(unsigned __int32), 8, fp);
         
         for(int k = 0; k < 8; ++k) {
-            sideIDs[i].push_back(buf[i]);
+            sideIDs[i].push_back(buf[k]);
         }
 
     }

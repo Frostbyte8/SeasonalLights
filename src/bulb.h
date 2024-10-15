@@ -58,8 +58,14 @@ class Bulb {
         // TODO: Create Bulbs based on some kind of reference count, if a specific gif isn't in use
         // we'll unload the D2D Bitmap for it.
 
-        const BulbInfo* getSideInfo(const SideID& side, const int& index) {
+        const BulbInfo* getSideInfo(const SideID& side, int index) {
+
+            if(index >= sideIDs[static_cast<int>(side)].size()) {
+                index = 0;
+            }
+
             int ID = sideIDs[static_cast<int>(side)][index];
+
             if(ID == 0xFFFFFFFF) {
                 ID = sideIDs[static_cast<int>(side)][0];
             }

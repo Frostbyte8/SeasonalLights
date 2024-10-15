@@ -42,12 +42,6 @@ struct DXInfo {
 
 };
 
-struct BulbType {
-    unsigned __int32    imageID;
-    unsigned __int8     frameCount;
-    unsigned __int8     currentFrame;
-};
-
 struct BulbT {
     const BulbInfo*             bulbInfo;
     unsigned __int8             currentFrame;
@@ -86,8 +80,8 @@ class MainWindow {
         ComPtr<IWICBitmapDecoder>       gifDecoder;
 
         Bulb                            bulb;
-        BulbT                           bulbSideTest[4];
         BulbT                           bulbCornerTest[4];
+        std::vector<BulbT>              sideBulbs[4];
 
         unsigned int                    length[4];
 
