@@ -73,6 +73,14 @@ class Bulb {
             return &(d2dData[ID]);
         }
 
+        const std::vector<unsigned __int32>&  getSideIDsVec(const SideID& side) const {
+            return sideIDs[static_cast<int>(side)];
+        }
+
+        const std::vector<BulbInfo>* getBulbInfoVec() const {
+            return &(d2dData);
+        }
+
         const BulbInfo* getCornerInfo(const CornerID& corner) {
             int ID = cornerIDs[static_cast<int>(corner)];
             return &(d2dData[ID]);

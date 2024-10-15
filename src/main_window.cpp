@@ -257,15 +257,45 @@ void MainWindow::loadGIF() {
 
     // TODO: Need a way to get the width/height, and the number of Sub-Bulbs each bulb has
 
+    /*
     const BulbInfo* bInfo = bulb.getSideInfo(SideID::TOP, 0);
+    
     size_t numBulbs = length[0] / bInfo->width;
 
-    for(size_t i = 0; i < numBulbs; ++i) {
+    for(size_t i = 0; i < numBulbs - 8; ++i) {
         BulbT bulbType;
         const BulbInfo* info = bulb.getSideInfo(SideID::TOP, i);
         bulbType.bulbInfo = info;
         sideBulbs[0].push_back(bulbType);
     }
+    */
+
+    const std::vector<BulbInfo>* bulbInfoVec = bulb.getBulbInfoVec();
+    const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(SideID::TOP);
+
+    unsigned int curLen = length[0];
+    int curID = 0;
+    do {
+        BulbT bulbType;
+       
+        bulbType.bulbInfo = &(*bulbInfoVec)[sideIDs[curID]];
+
+        // Will this bulb even fit?
+        if(curLen < bulbType.bulbInfo->width) {
+            break;
+        }
+
+        sideBulbs[0].push_back(bulbType);
+
+        curLen -= bulbType.bulbInfo->width;
+        curID++;
+
+        if(curID >= sideIDs.size() || sideIDs[curID] == 0xFFFFFFFF) {
+            curID = 0;
+        }
+
+    } while (true);
+
     
     //bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
     /*
@@ -442,16 +472,18 @@ bool MainWindow::OnPaint() {
     }
     */
 
-    D2D1_RECT_F dest1 = { 32, 0, sideBulbs[0][0].bulbInfo->width, sideBulbs[0][0].bulbInfo->height };
+    D2D1_RECT_F dest1 = { 0, 0, 0, sideBulbs[0][0].bulbInfo->height };
     dest1.right += dest1.left;
-    const int numBulbs = length[0] / sideBulbs[0][0].bulbInfo->width;
+    const int numBulbs = sideBulbs[0].size();
     
     int k = 0;
 
     for(int i = 0; i < numBulbs; ++i) {
+
+        dest1.right += sideBulbs[0][k].bulbInfo->width;
         dxInfo->dc->DrawBitmap(sideBulbs[0][k].bulbInfo->frames[sideBulbs[0][k].currentFrame], &dest1);
         dest1.left += sideBulbs[0][k].bulbInfo->width;
-        dest1.right += sideBulbs[0][k].bulbInfo->width;
+        
 
         k++;
         if (k >= sideBulbs[0].size()) {
