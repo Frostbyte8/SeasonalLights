@@ -245,42 +245,50 @@ void MainWindow::loadGIF() {
 
     bulb.loadBulb("D:\\dump\\12.bul");
     bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
+    
+    // TODO: Move this to it's own function
 
-    //cornerBulb.loadBulb("D:\\dump\\13.bul");
-    //cornerBulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
-
-    const std::vector<BulbInfo>* bulbInfoVec = bulb.getBulbInfoVec();
-    const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(SideID::TOP);
-
+    const std::vector<BulbInfo>& bulbInfoVec = bulb.getBulbInfoVec();
     const std::vector<unsigned __int32> cornerIDs = bulb.getCornerIDsVec();
     
-
     RECT rc;
     GetClientRect(window, &rc);
 
     // Set inital sizes, the deduct corner lengths
-    maxSideLength[static_cast<int>(SideID::BOTTOM)] = maxSideLength[static_cast<int>(SideID::TOP)] = rc.right - rc.left;
-    maxSideLength[static_cast<int>(SideID::RIGHT)] = maxSideLength[static_cast<int>(SideID::LEFT)] = rc.bottom - rc.top;
+    maxSideLength[SideID::TOP]      = maxSideLength[SideID::TOP] = rc.right - rc.left;;
+    maxSideLength[SideID::BOTTOM]   = maxSideLength[SideID::BOTTOM] = rc.right - rc.left;
+    maxSideLength[SideID::LEFT]     = maxSideLength[SideID::LEFT] = rc.bottom - rc.top;
+    maxSideLength[SideID::RIGHT]    = maxSideLength[SideID::RIGHT] = rc.bottom - rc.top;
     
-    maxSideLength[static_cast<int>(SideID::TOP)] -= (*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_LEFT)]].width + (*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_RIGHT)]].width;
-    
-    sideLength[0] = 0;
+    maxSideLength[SideID::TOP]      -= bulbInfoVec[cornerIDs[CornerID::TOP_LEFT]].width + bulbInfoVec[cornerIDs[CornerID::TOP_RIGHT]].width;
+    maxSideLength[SideID::BOTTOM]   -= bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]].width + bulbInfoVec[cornerIDs[CornerID::BOTTOM_RIGHT]].width;
 
-    int curID = 0;
+    maxSideLength[SideID::LEFT]     -= bulbInfoVec[cornerIDs[CornerID::TOP_LEFT]].height + bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]].height;
+    maxSideLength[SideID::RIGHT]    -= bulbInfoVec[cornerIDs[CornerID::TOP_RIGHT]].height + bulbInfoVec[cornerIDs[CornerID::BOTTOM_RIGHT]].height;
+    
+    // Keep this loop unrolled, it's small enough.
+    sideLength[0] = 0;
+    sideLength[1] = 0;
+    sideLength[2] = 0;
+    sideLength[3] = 0;
+
+    const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(SideID::TOP);
+
+    size_t curID = 0;
 
     do {
         BulbT bulbType;
        
-        bulbType.bulbInfo = &(*bulbInfoVec)[sideIDs[curID]];
+        bulbType.bulbInfo = &bulbInfoVec[sideIDs[curID]];
 
         // Will this bulb even fit?
-        if(sideLength[static_cast<int>(SideID::TOP)] + bulbType.bulbInfo->width > maxSideLength[static_cast<int>(SideID::TOP)]) {
+        if(sideLength[SideID::TOP] + bulbType.bulbInfo->width > maxSideLength[SideID::TOP]) {
             break;
         }
 
         sideBulbs[0].push_back(bulbType);
 
-        sideLength[static_cast<int>(SideID::TOP)] += bulbType.bulbInfo->width;
+        sideLength[SideID::TOP] += bulbType.bulbInfo->width;
         curID++;
 
         if(curID >= sideIDs.size() || sideIDs[curID] == 0xFFFFFFFF) {
@@ -290,9 +298,9 @@ void MainWindow::loadGIF() {
     } while (true);
 
     BulbT bulbType;
-    bulbType.bulbInfo = &(*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_LEFT)]];
+    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::TOP_LEFT]];
     cornerBulbs.push_back(bulbType);
-    bulbType.bulbInfo = &(*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_RIGHT)]];
+    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::TOP_RIGHT]];
     cornerBulbs.push_back(bulbType);
     
     //bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
@@ -470,14 +478,14 @@ bool MainWindow::OnPaint() {
     }
     */
 
-    WORD xOffset = (maxSideLength[0] - sideLength[0]) / 2;
+    LONG xOffset = (maxSideLength[0] - sideLength[0]) / 2;
     xOffset += cornerBulbs[0].bulbInfo->width;
 
-    D2D1_RECT_F dest1 = { xOffset, 0, 0, sideBulbs[0][0].bulbInfo->height };
+    D2D1_RECT_F dest1 = { static_cast<FLOAT>(xOffset), 0, 0, static_cast<FLOAT>(sideBulbs[0][0].bulbInfo->height) };
     dest1.right += dest1.left;
     const int numBulbs = sideBulbs[0].size();
     
-    int k = 0;
+    size_t k = 0;
 
     for(int i = 0; i < numBulbs; ++i) {
 
@@ -501,7 +509,7 @@ bool MainWindow::OnPaint() {
     RECT rc;
     GetClientRect(window, &rc);
 
-    dest1.left = (rc.right - rc.left) - cornerBulbs[0].bulbInfo->width;
+    dest1.left = static_cast<FLOAT>((rc.right - rc.left) - cornerBulbs[0].bulbInfo->width);
     dest1.right = dest1.left + cornerBulbs[0].bulbInfo->width;
     dxInfo->dc->DrawBitmap(cornerBulbs[1].bulbInfo->frames[0], &dest1);
     
@@ -551,14 +559,15 @@ void MainWindow::updateBulbs() {
 
     const size_t numBulbs = sideBulbs[0].size();
 
-    for(int i = 0; i < numBulbs; ++i) {
+    for(size_t i = 0; i < numBulbs; ++i) {
         if(sideBulbs[0][i].bulbInfo != NULL) {
-            if(sideBulbs[0][i].currentFrame == sideBulbs[0][i].bulbInfo->frames.size() - 1) {
+            
+            sideBulbs[0][i].currentFrame++;
+
+            if(sideBulbs[0][i].currentFrame >= sideBulbs[0][i].bulbInfo->frames.size()) {
                 sideBulbs[0][i].currentFrame = 0;
             }
-            else {
-                sideBulbs[0][i].currentFrame++;
-            }
+
         }
     }
 

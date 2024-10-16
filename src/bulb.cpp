@@ -1,9 +1,12 @@
 #include "bulb.h"
 
-
 static const char FILE_ID[] = "bluBrgiT\x04";
 static const unsigned int ID_OFFSET = 360;
 static const unsigned int LOOKUP_OFFSET = 508;
+
+//=============================================================================
+// Destructor
+//=============================================================================
 
 Bulb::~Bulb() {
 
@@ -17,6 +20,41 @@ Bulb::~Bulb() {
     }
 }
 
+//=============================================================================
+// Accessors
+//=============================================================================
+
+///----------------------------------------------------------------------------
+/// getBulbInfoVec - Get a constant reference to the vector that contains the
+/// information about each of the sub bulbs within the Bulb file
+///----------------------------------------------------------------------------
+
+const std::vector<BulbInfo>& Bulb::getBulbInfoVec() const {
+    return d2dData;
+}
+
+///----------------------------------------------------------------------------
+/// getCornerIDsVec - Get a constant reference to the vector that contains the
+/// Bulb IDs for each of the 4 corners.
+///----------------------------------------------------------------------------
+
+const std::vector<unsigned __int32>& Bulb::getCornerIDsVec() const {
+    return cornerIDVec;
+}
+
+///----------------------------------------------------------------------------
+/// getSideIDsVec - Get a constant reference to a vector that contains the
+/// Bulb IDs for requested side
+///----------------------------------------------------------------------------
+
+const std::vector<unsigned __int32>& Bulb::getSideIDsVec(const SideID& side) const {
+    return sideIDs[side];
+}
+
+//=============================================================================
+// Functions
+//=============================================================================
+
 void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, ID2D1DeviceContext* dc) {
 
     destroyBitmaps();
@@ -26,14 +64,11 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
     ID2D1Bitmap*            d2dBMP          = NULL;
 
     // TOOD: Error Checking
-
-
     const size_t numGifs = imageData.size();
 
     for(size_t i = 0; i < numGifs; ++i) {
 
-        HRESULT hr = factory->CreateStream(&imageStream);
-    
+        HRESULT hr = factory->CreateStream(&imageStream);   
         BulbInfo bi;
 
         if(imageData[i].data != NULL) {

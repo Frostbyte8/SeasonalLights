@@ -1,7 +1,14 @@
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#include <stdlib.h>
 #include "main_window.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     
+    int tmpFlag = _CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
+    tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
+    _CrtSetDbgFlag(tmpFlag);
+
     MainWindow mainWindow;
 
     if(!mainWindow.initCOM()) {
@@ -25,4 +32,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     mainWindow.loadAssets();
 
     return mainWindow.doLoop();
+
 }

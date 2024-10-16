@@ -80,17 +80,12 @@ class MainWindow {
         ComPtr<IWICBitmapDecoder>       gifDecoder;
 
         Bulb                            bulb;
-        Bulb                            cornerBulb;
-
-        BulbT                           bulbCornerTest[4];
 
         std::vector<BulbT>              cornerBulbs;
         std::vector<BulbT>              sideBulbs[4];
 
-        WORD                            maxSideLength[4];
-        WORD                            sideLength[4];
-
-        //unsigned int                    length[4];
+        LONG                            maxSideLength[4];
+        LONG                            sideLength[4];
 
         /*
         std::vector<BulbType>           topBulbs;
@@ -99,7 +94,6 @@ class MainWindow {
         std::vector<BulbType>           rightBulbs;
         std::vector<BulbType>           cornerBulbs;
         */
-
 
 };
 
