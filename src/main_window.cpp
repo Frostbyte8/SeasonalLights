@@ -272,91 +272,47 @@ void MainWindow::loadGIF() {
     sideLength[2] = 0;
     sideLength[3] = 0;
 
-    const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(SideID::TOP);
-
     size_t curID = 0;
 
-    do {
-        BulbT bulbType;
-       
-        bulbType.bulbInfo = &bulbInfoVec[sideIDs[curID]];
+    for(int currentSide = 0; currentSide <= 3; ++currentSide) {
 
-        // Will this bulb even fit?
-        if(sideLength[SideID::TOP] + bulbType.bulbInfo->width > maxSideLength[SideID::TOP]) {
-            break;
-        }
+        const bool useWidth = (currentSide == SideID::TOP || currentSide == SideID::BOTTOM) ? true : false;
+        const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(currentSide);
 
-        sideBulbs[0].push_back(bulbType);
+        do {
 
-        sideLength[SideID::TOP] += bulbType.bulbInfo->width;
-        curID++;
+            BulbT bulbType;
+            bulbType.bulbInfo = &bulbInfoVec[sideIDs[curID]];
+            const unsigned __int16 bulbLength = useWidth ? bulbType.bulbInfo->width : bulbType.bulbInfo->height;
 
-        if(curID >= sideIDs.size() || sideIDs[curID] == 0xFFFFFFFF) {
-            curID = 0;
-        }
+            // Will this bulb even fit?
+            if(sideLength[currentSide] + bulbLength > maxSideLength[currentSide]) {
+                break;
+            }
 
-    } while (true);
+            sideBulbs[currentSide].push_back(bulbType);
+
+            sideLength[currentSide] += bulbLength;
+            curID++;
+
+            if(curID >= sideIDs.size() || sideIDs[curID] == 0xFFFFFFFF) {
+                curID = 0;
+            }
+
+        } while (true);
+
+    }
 
     BulbT bulbType;
     bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::TOP_LEFT]];
     cornerBulbs.push_back(bulbType);
     bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::TOP_RIGHT]];
     cornerBulbs.push_back(bulbType);
-    
-    //bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
-    /*
-    bulbSideTest[1].bulbInfo = bulb.getSideInfo(SideID::LEFT, 0);
-    bulbSideTest[3].bulbInfo = bulb.getSideInfo(SideID::BOTTOM, 0);
-    bulbSideTest[4].bulbInfo = bulb.getSideInfo(SideID::RIGHT, 0);
 
-    bulbCornerTest[0].bulbInfo = bulb.getCornerInfo(CornerID::TOP_LEFT);
-    bulbCornerTest[1].bulbInfo = bulb.getCornerInfo(CornerID::TOP_RIGHT);
-    bulbCornerTest[2].bulbInfo = bulb.getCornerInfo(CornerID::BOTTOM_LEFT);
-    bulbCornerTest[3].bulbInfo = bulb.getCornerInfo(CornerID::BOTTOM_RIGHT);
-
-    length[0] = length[0] - (bulbCornerTest[0].bulbInfo->width + bulbCornerTest[1].bulbInfo->width);
-    length[1] = length[1] - (bulbCornerTest[0].bulbInfo->height + bulbCornerTest[2].bulbInfo->height);
-    length[2] = length[2] - (bulbCornerTest[2].bulbInfo->width + bulbCornerTest[3].bulbInfo->width);
-    length[3] = length[3] - (bulbCornerTest[1].bulbInfo->height + bulbCornerTest[3].bulbInfo->height);
-    */
-
-    //bulbTest.bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
-
-    /*
-    if(!dxInfo) {
-        return; // Can't do anything if D2D hasn't been initalized
-    }
-    
-    // TODO: Figureout why we can't use ComPtr with wicFrame without an error.
-    IWICBitmapFrameDecode*          wicFrame = NULL;
-    ComPtr<IWICFormatConverter>     wicConverter;
-
-    // TODO: From Stream
-    wicFactory->CreateDecoderFromFilename(L"D://Dump//yellow.gif", NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &gifDecoder);
-
-    UINT numFrames;
-    gifDecoder->GetFrameCount(&numFrames);
-    gifFrames.reserve(numFrames);
-
-    for(size_t i = 0; i < numFrames; ++i) {
-
-        // Decode Frame, and convert it to a Direct2D Bitmap we can use to draw with.
-        
-        gifDecoder->GetFrame(i, &wicFrame);
-        wicFactory->CreateFormatConverter(&wicConverter);
-        wicConverter->Initialize(wicFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0, WICBitmapPaletteTypeCustom);
-
-        // TODO: Support for GIFs that use the compose mode?
-        ID2D1Bitmap* bitmap = NULL;
-
-        dxInfo->dc->CreateBitmapFromWicBitmap(*(&wicConverter), NULL, &bitmap);
-        gifFrames.push_back(bitmap);
-
-        wicFrame->Release();
-        wicFrame = NULL;
-        wicConverter = nullptr;
-    }
-    */
+    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]];
+    cornerBulbs.push_back(bulbType);
+    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_RIGHT]];
+    cornerBulbs.push_back(bulbType);
     
 }
 
@@ -379,140 +335,110 @@ bool MainWindow::OnPaint() {
     dxInfo->dc->BeginDraw();
     dxInfo->dc->Clear();
 
-    /*
-    D2D1_RECT_F rc;
-    D2D1_RECT_F rc2;
-    rc.top = 0;
-    rc.left = 0;
-    rc.right = 32;
-    rc.bottom = 32;
-
-    rc2.top = 900 - 32;
-    rc2.left = 0;
-    rc2.right = 32;
-    rc2.bottom = 900;
-
-    const int numBulbs = 1600 / 32;
-
-    
-    D2D1_MATRIX_4X4_F vFlip {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, -1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 32.0f, 0.0f, 1.0f,
-    };
-
-    D2D1_MATRIX_4X4_F ROT90{
-        0.0f, 1.0f, 0.0f, 0.0f,
-        -1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        32.0f, 0.0f, 0.0f, 1.0f,
-    };
-
-    D2D1_MATRIX_4X4_F ROT270{
-        0.0f, -1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 32.0f, 0.0f, 1.0f,
-    };
-    
-    for(int i = 0; i < numBulbs; ++i) {
-        dxInfo->dc->DrawBitmap(gifFrames[frameIndex], &rc, 1.0F, D2D1_INTERPOLATION_MODE_LINEAR, NULL, &vFlip);
-        dxInfo->dc->DrawBitmap(gifFrames[frameIndex], &rc2);
-        rc.left += 32;
-        rc.right += 32;
-        rc2.left += 32;
-        rc2.right += 32;
-    }
-    
-    const int numB2 = 900 / 32;
-
-    rc.top = 0;
-    rc.left = 0;
-    rc.right = 32;
-    rc.bottom = 32;
-
-    rc2.top = 1600;
-    rc2.left = 0;
-    rc2.right = 32;
-    rc2.bottom = 1600 - 32;
-
-    for(int i = 0; i < numB2 - 1; ++i) {
-        if(i != 0) {
-            dxInfo->dc->DrawBitmap(gifFrames[frameIndex], &rc, 1.0F, D2D1_INTERPOLATION_MODE_LINEAR, NULL, &ROT90);
-            dxInfo->dc->DrawBitmap(gifFrames[frameIndex], &rc2, 1.0F, D2D1_INTERPOLATION_MODE_LINEAR, NULL, &ROT270);
-        }
-        rc.left += 32;
-        rc.right += 32;
-        rc2.left -= 32;
-        rc2.right -= 32;
-    }
-    */
-
-    /*
-    D2D1_RECT_F dest1 = { 32, 0, 64, 32 };
-    D2D1_RECT_F dest2 = { 32, 868, 64, 900 };
-    const size_t tbSize = topBulbs.size();
-
-    for(size_t i = 0; i < tbSize; ++i) {
-        dxInfo->dc->DrawBitmap(gifFrames[topBulbs[i].currentFrame], &dest1); // , 1.0F, D2D1_INTERPOLATION_MODE_LINEAR, NULL, &vFlip);
-        dxInfo->dc->DrawBitmap(gifFrames[bottomBulbs[i].currentFrame], &dest2);
-        dest1.left += 32;
-        dest1.right += 32;
-        dest2.left += 32;
-        dest2.right += 32;
-    }
-
-    dest1 = { 0, 32, 32, 64 };
-    dest2 = { 1568, 32, 1600, 64 };
-
-    const size_t lrSize = leftBulbs.size();
-
-    for(size_t i = 0; i < lrSize; ++i) {
-        dxInfo->dc->DrawBitmap(gifFrames[leftBulbs[i].currentFrame], &dest1); // , 1.0F, D2D1_INTERPOLATION_MODE_LINEAR, NULL, &vFlip);
-        dxInfo->dc->DrawBitmap(gifFrames[rightBulbs[i].currentFrame], &dest2);
-        dest1.top += 32;
-        dest1.bottom += 32;
-        dest2.top += 32;
-        dest2.bottom += 32;
-    }
-    */
-
-    LONG xOffset = (maxSideLength[0] - sideLength[0]) / 2;
-    xOffset += cornerBulbs[0].bulbInfo->width;
-
-    D2D1_RECT_F dest1 = { static_cast<FLOAT>(xOffset), 0, 0, static_cast<FLOAT>(sideBulbs[0][0].bulbInfo->height) };
-    dest1.right += dest1.left;
-    const int numBulbs = sideBulbs[0].size();
-    
-    size_t k = 0;
-
-    for(int i = 0; i < numBulbs; ++i) {
-
-        dest1.right += sideBulbs[0][k].bulbInfo->width;
-        dxInfo->dc->DrawBitmap(sideBulbs[0][k].bulbInfo->frames[sideBulbs[0][k].currentFrame], &dest1);
-        dest1.left += sideBulbs[0][k].bulbInfo->width;
-        
-
-        k++;
-        if (k >= sideBulbs[0].size()) {
-            k = 0;
-        }
-    }
-
-    dest1.top = 0;
-    dest1.left = 0;
-    dest1.right = cornerBulbs[0].bulbInfo->width;
-    dest1.bottom = cornerBulbs[0].bulbInfo->height;
-    dxInfo->dc->DrawBitmap(cornerBulbs[0].bulbInfo->frames[0], &dest1);
-
     RECT rc;
     GetClientRect(window, &rc);
 
-    dest1.left = static_cast<FLOAT>((rc.right - rc.left) - cornerBulbs[0].bulbInfo->width);
-    dest1.right = dest1.left + cornerBulbs[0].bulbInfo->width;
-    dxInfo->dc->DrawBitmap(cornerBulbs[1].bulbInfo->frames[0], &dest1);
+
+    for(int currentSide = 0; currentSide <= 3; ++currentSide) {
+
+        FLOAT posOffset = (maxSideLength[currentSide] - sideLength[currentSide]) / 2;
+        posOffset += 32;
+
+        D2D1_RECT_F dest;
+        
+        // TODO: Widest/Tallest Bulb
+
+        switch (currentSide) {
+
+            case SideID::TOP:
+                dest.top = 0;
+                dest.left = posOffset;
+                break;
+
+            case SideID::BOTTOM:
+                dest.top = (rc.bottom - rc.top) - sideBulbs[currentSide][0].bulbInfo->height;
+                dest.left = posOffset;
+                break;
+
+            case SideID::LEFT:
+                dest.top = posOffset;
+                dest.left = 0;
+                break;
+
+            case SideID::RIGHT:
+                dest.top = posOffset;
+                dest.left = (rc.right - rc.left) - sideBulbs[currentSide][0].bulbInfo->width;
+                break;
+
+        }
+
+        dest.right = dest.left + sideBulbs[currentSide][0].bulbInfo->width;
+        dest.bottom = dest.top + sideBulbs[currentSide][0].bulbInfo->height;     
+
+        const size_t numBulbs = sideBulbs[currentSide].size();
     
+        for(int curBulb = 0; curBulb < numBulbs; ++curBulb) {
+
+            const BulbInfo* bi = sideBulbs[currentSide][curBulb].bulbInfo;
+            const unsigned __int8 currentFrame = sideBulbs[currentSide][curBulb].currentFrame;
+           
+            dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+            
+            if(currentSide == SideID::TOP || currentSide == SideID::BOTTOM) {
+                dest.right += bi->width;
+                dest.left += bi->width;
+            }
+            else {
+                dest.top += bi->height;
+                dest.bottom += bi->height;
+            }
+
+        }
+
+    }
+
+    // Top Left
+    const BulbInfo* bi = cornerBulbs[CornerID::TOP_LEFT].bulbInfo;
+    unsigned __int8 currentFrame = cornerBulbs[CornerID::TOP_LEFT].currentFrame;
+
+    D2D1_RECT_F dest = { 0, 0, bi->width, bi->height };
+    dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+    
+    // Top Right
+
+    bi = cornerBulbs[CornerID::TOP_RIGHT].bulbInfo;
+    currentFrame = cornerBulbs[CornerID::TOP_RIGHT].currentFrame;
+    dest.left = (rc.right - rc.left) - bi->width;
+    dest.right = dest.left + bi->width;
+    dest.top = 0;
+    dest.bottom = bi->height;
+   
+    dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+
+    // Bottom Left
+
+    bi = cornerBulbs[CornerID::BOTTOM_LEFT].bulbInfo;
+    currentFrame = cornerBulbs[CornerID::BOTTOM_LEFT].currentFrame;
+
+    dest.left = 0;
+    dest.right = bi->width;
+    dest.top = (rc.bottom - rc.top) - bi->height;
+    dest.bottom = dest.top + bi->height;
+
+    dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+
+    // Bottom Right
+
+    bi = cornerBulbs[CornerID::BOTTOM_RIGHT].bulbInfo;
+    currentFrame = cornerBulbs[CornerID::BOTTOM_RIGHT].currentFrame;
+
+    dest.left = (rc.right - rc.left) - bi->width;
+    dest.right = dest.left + bi->width;
+    dest.top = (rc.bottom - rc.top) - bi->height;
+    dest.bottom = dest.top + bi->height;
+
+    dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+        
     HRESULT status = dxInfo->dc->EndDraw();
     IS_OK(status);
 
@@ -527,27 +453,7 @@ bool MainWindow::OnPaint() {
 //-----------------------------------------------------------------------------
 
 void MainWindow::initBulbs() {
-    /*
-    const size_t numTBBulbs = (1600 - 64) / 32;
-    const size_t numLRBulbs = (900 - 64) / 32;
-    
-    topBulbs.reserve(numTBBulbs);
 
-    BulbType bt = { 0 };
-    bt.frameCount = gifFrames.size();
-
-    for(size_t i = 0; i < numTBBulbs + 0; ++i) {
-        bt.currentFrame = (i % bt.frameCount);
-        topBulbs.push_back(bt);
-        bottomBulbs.push_back(bt);
-    }
-
-     for(size_t i = 0; i < numLRBulbs + 0; ++i) {
-        bt.currentFrame = (i % bt.frameCount);
-        leftBulbs.push_back(bt);
-        rightBulbs.push_back(bt);
-    }   
-    */
 }
 
 //-----------------------------------------------------------------------------
@@ -557,34 +463,35 @@ void MainWindow::initBulbs() {
 void MainWindow::updateBulbs() {
 
 
-    const size_t numBulbs = sideBulbs[0].size();
+    for(size_t currentSide = 0; currentSide <= 3; ++currentSide) {
 
-    for(size_t i = 0; i < numBulbs; ++i) {
-        if(sideBulbs[0][i].bulbInfo != NULL) {
+        const size_t numBulbs = sideBulbs[currentSide].size();
+
+        for(size_t currentBulb = 0; currentBulb < numBulbs; ++currentBulb) {
+            if(sideBulbs[currentSide][currentBulb].bulbInfo != NULL) {
             
-            sideBulbs[0][i].currentFrame++;
+                sideBulbs[currentSide][currentBulb].currentFrame++;
 
-            if(sideBulbs[0][i].currentFrame >= sideBulbs[0][i].bulbInfo->frames.size()) {
-                sideBulbs[0][i].currentFrame = 0;
+                if(sideBulbs[currentSide][currentBulb].currentFrame >= sideBulbs[currentSide][currentBulb].bulbInfo->frames.size()) {
+                    sideBulbs[currentSide][currentBulb].currentFrame = 0;
+                }
+
+            }
+        }
+    }
+
+    for(size_t currentCorner = 0; currentCorner <= 3; ++ currentCorner) {
+        if(cornerBulbs[currentCorner].bulbInfo != NULL) {
+            
+            cornerBulbs[currentCorner].currentFrame++;
+
+            if(cornerBulbs[currentCorner].currentFrame >= cornerBulbs[currentCorner].bulbInfo->frames.size()) {
+                cornerBulbs[currentCorner].currentFrame = 0;
             }
 
         }
     }
 
-    /*
-    const size_t tbBulbs = topBulbs.size();
-    const size_t lrBulbs = leftBulbs.size();
-
-    for(size_t i = 0; i < tbBulbs; ++i) {
-        topBulbs[i].currentFrame = ((topBulbs[i].currentFrame + 1) % topBulbs[i].frameCount);
-        bottomBulbs[i].currentFrame = ((bottomBulbs[i].currentFrame + 1) % bottomBulbs[i].frameCount);
-    }
-
-    for (size_t i = 0; i < lrBulbs; ++i) {
-        leftBulbs[i].currentFrame = ((leftBulbs[i].currentFrame + 1) % leftBulbs[i].frameCount);
-        rightBulbs[i].currentFrame = ((rightBulbs[i].currentFrame + 1) % rightBulbs[i].frameCount);
-    }
-    */
 }
 
 //-----------------------------------------------------------------------------

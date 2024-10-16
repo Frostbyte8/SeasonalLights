@@ -61,7 +61,7 @@ class Bulb {
        
         const std::vector<BulbInfo>& getBulbInfoVec() const;
         const std::vector<unsigned __int32>& getCornerIDsVec() const;
-        const std::vector<unsigned __int32>& getSideIDsVec(const SideID& side) const;
+        const std::vector<unsigned __int32>& getSideIDsVec(const int& side) const;
 
     private:
         void destroyBitmaps();

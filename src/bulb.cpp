@@ -1,5 +1,5 @@
 #include "bulb.h"
-
+#include <cassert>
 static const char FILE_ID[] = "bluBrgiT\x04";
 static const unsigned int ID_OFFSET = 360;
 static const unsigned int LOOKUP_OFFSET = 508;
@@ -47,7 +47,8 @@ const std::vector<unsigned __int32>& Bulb::getCornerIDsVec() const {
 /// Bulb IDs for requested side
 ///----------------------------------------------------------------------------
 
-const std::vector<unsigned __int32>& Bulb::getSideIDsVec(const SideID& side) const {
+const std::vector<unsigned __int32>& Bulb::getSideIDsVec(const int& side) const {
+    assert(side >= SideID::TOP && side <= SideID::BOTTOM);
     return sideIDs[side];
 }
 
