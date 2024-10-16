@@ -50,7 +50,7 @@ class Bulb {
         int loadBulb(const std::string& filePath);
         void initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, ID2D1DeviceContext* dc);
         
-        unsigned __int32                            cornerIDs[4];
+        std::vector<unsigned __int32>               cornerIDVec;
         std::vector<unsigned __int32>               sideIDs[4];
         std::vector<GIFData>                        imageData;
         std::vector<BulbInfo>                       d2dData;
@@ -81,8 +81,13 @@ class Bulb {
             return &(d2dData);
         }
 
+        const std::vector<unsigned __int32>& getCornerIDsVec() {
+            return cornerIDVec;
+        }
+      
+
         const BulbInfo* getCornerInfo(const CornerID& corner) {
-            int ID = cornerIDs[static_cast<int>(corner)];
+            int ID = cornerIDVec[static_cast<int>(corner)];
             return &(d2dData[ID]);
         }
 

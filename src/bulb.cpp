@@ -26,7 +26,7 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
     ID2D1Bitmap*            d2dBMP          = NULL;
 
     // TOOD: Error Checking
-    // TODO: Sprite Sheets instead of using a bitmap for every gif frame
+
 
     const size_t numGifs = imageData.size();
 
@@ -46,9 +46,11 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
             UINT numFrames;
             decoder->GetFrameCount(&numFrames);
 
-        
             bi.width  = imageData[i].width;
             bi.height = imageData[i].height;
+
+            // Extract individual frames
+            // TODO: Sprite Sheets instead of using a bitmap for every gif frame
 
             for (size_t k = 0; k < numFrames; ++k) {
 
@@ -56,8 +58,6 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                 IWICMetadataQueryReader*    decodedMeta = NULL;
             
                 decoder->GetFrame(k, &decodedFrame);
-                decodedFrame->GetMetadataQueryReader(&decodedMeta);
-
                 factory->CreateFormatConverter(&formatConverter);
                 formatConverter->Initialize(decodedFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0, WICBitmapPaletteTypeCustom);
 
@@ -68,8 +68,13 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
                 decodedFrame->GetSize(&frameWidth, &frameHeight);
 
+                // Check to see if this frame is smaller than the gif image itself, it may be "replace" style gif.
                 if(k != 0 && (frameWidth != bi.width || frameHeight != bi.height) ) {
                    
+                    // Get the Left and Top positions of the frame, and then
+                    // use that information to replace pixels in the previous frame.
+                    decodedFrame->GetMetadataQueryReader(&decodedMeta);
+
                     PROPVARIANT frameX;
                     PROPVARIANT frameY;
                     PropVariantInit(&frameX);
@@ -77,8 +82,6 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                     
                     decodedMeta->GetMetadataByName(L"/imgdesc/Left", &frameX);
                     decodedMeta->GetMetadataByName(L"/imgdesc/Top", &frameY);
-
-
 
                     ID2D1Bitmap* prevFrame = bi.frames[k-1];
                     D2D1_SIZE_U prevSize = { bi.width, bi.height };
@@ -96,42 +99,25 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
                     D2D1_POINT_2U dest = { frameX.intVal , frameY.intVal };
                     
-
                     bitmap->CopyFromBitmap(&dest, tempBMP, NULL);
                     tempBMP->Release();
                     tempBMP = NULL;
-                                           
+
+                    decodedMeta->Release();
+                    decodedMeta = NULL;
 
                 }
                 else {
                     dc->CreateBitmapFromWicBitmap(*(&formatConverter), NULL, &bitmap);
                 }
-
-
-                /*
-                TODO: combine/replace gifs correctly, even though that wasn't in the OG.
-                Simply copy the previous image, and then add the new data ontop of it.
-                UINT frameWidth;
-                UINT frameHeight;
-                decodedFrame->GetSize(&frameWidth, &frameHeight);
-                decodedMeta->GetMetadataByName(
-                //(L"/imgdesc/Left", &var);
-                //(L"/imgdesc/Top", &var2);
-
-                */             
-
-                
-
+       
                 bi.frames.push_back(bitmap);
 
-                decodedMeta->Release();
-                decodedMeta = NULL;
-                
                 decodedFrame->Release();  
-                decodedFrame        = NULL;
+                decodedFrame = NULL;
 
                 formatConverter->Release();
-                formatConverter     = NULL;
+                formatConverter = NULL;
 
             }
 
@@ -186,7 +172,13 @@ int Bulb::loadBulb(const std::string& filePath) {
 
     // Collect IDs
 
+    unsigned __int32 cornerIDs[4];
+
     fread(cornerIDs, sizeof(unsigned __int32), 4, fp);
+
+    for(int i = 0; i < 4; i++) {
+        cornerIDVec.push_back(cornerIDs[i]);
+    }
 
     for(int i = 0; i < 4; ++i) {
 

@@ -129,15 +129,6 @@ void MainWindow::setInitalSize() {
                        mi.rcMonitor.right - mi.rcMonitor.left, 
                        mi.rcMonitor.bottom - mi.rcMonitor.top, FALSE);
 
-    // Just for testing
-    RECT rc;
-    GetClientRect(window, &rc);
-    length[0] = mi.rcMonitor.right - mi.rcMonitor.left;
-    length[1] = mi.rcMonitor.bottom - mi.rcMonitor.top;
-
-    length[2] = length[0];
-    length[3] = length[1];
-
 }
 
 //-----------------------------------------------------------------------------
@@ -255,39 +246,41 @@ void MainWindow::loadGIF() {
     bulb.loadBulb("D:\\dump\\12.bul");
     bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
 
-    // TODO: Need a way to get the width/height, and the number of Sub-Bulbs each bulb has
-
-    /*
-    const BulbInfo* bInfo = bulb.getSideInfo(SideID::TOP, 0);
-    
-    size_t numBulbs = length[0] / bInfo->width;
-
-    for(size_t i = 0; i < numBulbs - 8; ++i) {
-        BulbT bulbType;
-        const BulbInfo* info = bulb.getSideInfo(SideID::TOP, i);
-        bulbType.bulbInfo = info;
-        sideBulbs[0].push_back(bulbType);
-    }
-    */
+    //cornerBulb.loadBulb("D:\\dump\\13.bul");
+    //cornerBulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
 
     const std::vector<BulbInfo>* bulbInfoVec = bulb.getBulbInfoVec();
     const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(SideID::TOP);
 
-    unsigned int curLen = length[0];
+    const std::vector<unsigned __int32> cornerIDs = bulb.getCornerIDsVec();
+    
+
+    RECT rc;
+    GetClientRect(window, &rc);
+
+    // Set inital sizes, the deduct corner lengths
+    maxSideLength[static_cast<int>(SideID::BOTTOM)] = maxSideLength[static_cast<int>(SideID::TOP)] = rc.right - rc.left;
+    maxSideLength[static_cast<int>(SideID::RIGHT)] = maxSideLength[static_cast<int>(SideID::LEFT)] = rc.bottom - rc.top;
+    
+    maxSideLength[static_cast<int>(SideID::TOP)] -= (*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_LEFT)]].width + (*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_RIGHT)]].width;
+    
+    sideLength[0] = 0;
+
     int curID = 0;
+
     do {
         BulbT bulbType;
        
         bulbType.bulbInfo = &(*bulbInfoVec)[sideIDs[curID]];
 
         // Will this bulb even fit?
-        if(curLen < bulbType.bulbInfo->width) {
+        if(sideLength[static_cast<int>(SideID::TOP)] + bulbType.bulbInfo->width > maxSideLength[static_cast<int>(SideID::TOP)]) {
             break;
         }
 
         sideBulbs[0].push_back(bulbType);
 
-        curLen -= bulbType.bulbInfo->width;
+        sideLength[static_cast<int>(SideID::TOP)] += bulbType.bulbInfo->width;
         curID++;
 
         if(curID >= sideIDs.size() || sideIDs[curID] == 0xFFFFFFFF) {
@@ -296,6 +289,11 @@ void MainWindow::loadGIF() {
 
     } while (true);
 
+    BulbT bulbType;
+    bulbType.bulbInfo = &(*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_LEFT)]];
+    cornerBulbs.push_back(bulbType);
+    bulbType.bulbInfo = &(*bulbInfoVec)[cornerIDs[static_cast<int>(CornerID::TOP_RIGHT)]];
+    cornerBulbs.push_back(bulbType);
     
     //bulbSideTest[0].bulbInfo = bulb.getSideInfo(SideID::TOP, 0);
     /*
@@ -472,7 +470,10 @@ bool MainWindow::OnPaint() {
     }
     */
 
-    D2D1_RECT_F dest1 = { 0, 0, 0, sideBulbs[0][0].bulbInfo->height };
+    WORD xOffset = (maxSideLength[0] - sideLength[0]) / 2;
+    xOffset += cornerBulbs[0].bulbInfo->width;
+
+    D2D1_RECT_F dest1 = { xOffset, 0, 0, sideBulbs[0][0].bulbInfo->height };
     dest1.right += dest1.left;
     const int numBulbs = sideBulbs[0].size();
     
@@ -490,6 +491,19 @@ bool MainWindow::OnPaint() {
             k = 0;
         }
     }
+
+    dest1.top = 0;
+    dest1.left = 0;
+    dest1.right = cornerBulbs[0].bulbInfo->width;
+    dest1.bottom = cornerBulbs[0].bulbInfo->height;
+    dxInfo->dc->DrawBitmap(cornerBulbs[0].bulbInfo->frames[0], &dest1);
+
+    RECT rc;
+    GetClientRect(window, &rc);
+
+    dest1.left = (rc.right - rc.left) - cornerBulbs[0].bulbInfo->width;
+    dest1.right = dest1.left + cornerBulbs[0].bulbInfo->width;
+    dxInfo->dc->DrawBitmap(cornerBulbs[1].bulbInfo->frames[0], &dest1);
     
     HRESULT status = dxInfo->dc->EndDraw();
     IS_OK(status);
