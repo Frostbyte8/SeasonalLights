@@ -243,7 +243,7 @@ bool MainWindow::InitDirect2D() {
 
 void MainWindow::loadGIF() {
 
-    bulb.loadBulb("D:\\dump\\12.bul");
+    bulb.loadBulb("D:\\dump\\13.bul");
     bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
     
     // TODO: Move this to it's own function
@@ -341,8 +341,10 @@ bool MainWindow::OnPaint() {
 
     for(int currentSide = 0; currentSide <= 3; ++currentSide) {
 
+        
+
         FLOAT posOffset = (maxSideLength[currentSide] - sideLength[currentSide]) / 2;
-        posOffset += 32;
+        //posOffset += sideBulbs[currentSide][0].bulbInfo->width;
 
         D2D1_RECT_F dest;
         
@@ -353,30 +355,34 @@ bool MainWindow::OnPaint() {
             case SideID::TOP:
                 dest.top = 0;
                 dest.left = posOffset;
+                dest.left += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->width;
                 break;
 
             case SideID::BOTTOM:
                 dest.top = (rc.bottom - rc.top) - sideBulbs[currentSide][0].bulbInfo->height;
                 dest.left = posOffset;
+                dest.left += cornerBulbs[CornerID::BOTTOM_LEFT].bulbInfo->width;
                 break;
 
             case SideID::LEFT:
                 dest.top = posOffset;
                 dest.left = 0;
+                dest.top += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->height;
                 break;
 
             case SideID::RIGHT:
                 dest.top = posOffset;
                 dest.left = (rc.right - rc.left) - sideBulbs[currentSide][0].bulbInfo->width;
+                dest.top += cornerBulbs[CornerID::TOP_RIGHT].bulbInfo->height;
                 break;
 
         }
 
         dest.right = dest.left + sideBulbs[currentSide][0].bulbInfo->width;
         dest.bottom = dest.top + sideBulbs[currentSide][0].bulbInfo->height;     
-
+        
         const size_t numBulbs = sideBulbs[currentSide].size();
-    
+
         for(int curBulb = 0; curBulb < numBulbs; ++curBulb) {
 
             const BulbInfo* bi = sideBulbs[currentSide][curBulb].bulbInfo;
