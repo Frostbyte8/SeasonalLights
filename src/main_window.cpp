@@ -1,6 +1,9 @@
 #include "main_window.h"
 #include "resources\resource.h"
 
+#include <stdlib.h>
+#include <time.h>
+
 const std::wstring MainWindow::className = std::wstring(L"HolidayLightsMainWindow");
 #define IS_OK(x) if(x != S_OK) { return false; }
 
@@ -80,6 +83,8 @@ bool MainWindow::createWindow(HINSTANCE hInstance) {
         MessageBox(NULL, L"Window Creation Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
         return false;
     }
+
+    srand(time(NULL));
 
     return true;
 }
@@ -509,17 +514,29 @@ void MainWindow::initBulbs() {
 
 void MainWindow::updateBulbs() {
 
-
-    for(size_t currentSide = 0; currentSide <= 3; ++currentSide) {
+        for(size_t currentSide = 0; currentSide <= 3; ++currentSide) {
 
         const size_t numBulbs = sideBulbs[currentSide].size();
 
         for(size_t currentBulb = 0; currentBulb < numBulbs; ++currentBulb) {
             if(sideBulbs[currentSide][currentBulb].bulbInfo != NULL) {
-            
-                sideBulbs[currentSide][currentBulb].currentFrame++;
 
-                if(sideBulbs[currentSide][currentBulb].currentFrame >= sideBulbs[currentSide][currentBulb].bulbInfo->frames.size()) {
+                const size_t numFrames = sideBulbs[currentSide][currentBulb].bulbInfo->frames.size();
+            
+                if(blinkMode == BlinkMode::RANDOM && numFrames != 1) {
+
+                    int next = rand() % 100;
+
+                    if(rand() % 100 > 50) {
+                        sideBulbs[currentSide][currentBulb].currentFrame++;
+                    }
+
+                }
+                else {
+                    sideBulbs[currentSide][currentBulb].currentFrame++;
+                }
+
+                if(sideBulbs[currentSide][currentBulb].currentFrame >= numFrames) {
                     sideBulbs[currentSide][currentBulb].currentFrame = 0;
                 }
 

@@ -61,7 +61,7 @@ namespace BlinkMode {
 class MainWindow {
 
     public:
-        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL), blinkMode(BlinkMode::ALTERNATING), waitTime(250) {}
+        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL), blinkMode(BlinkMode::RANDOM), waitTime(250) {}
         
         ~MainWindow() {
             delete dxInfo;
