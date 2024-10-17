@@ -2,6 +2,7 @@
 #define __BULB_H__
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 
 #include <d2d1_2.h>
@@ -55,10 +56,7 @@ class Bulb {
         std::vector<GIFData>                        imageData;
         std::vector<BulbInfo>                       d2dData;
         std::vector<unsigned __int32>               validIDs;
-
-        // TODO: Create Bulbs based on some kind of reference count, if a specific gif isn't in use
-        // we'll unload the D2D Bitmap for it.
-       
+      
         const std::vector<BulbInfo>& getBulbInfoVec() const;
         const std::vector<unsigned __int32>& getCornerIDsVec() const;
         const std::vector<unsigned __int32>& getSideIDsVec(const int& side) const;
@@ -66,6 +64,46 @@ class Bulb {
     private:
         void destroyBitmaps();
         
+};
+
+class BulbCollection {
+    
+    public:
+        BulbCollection() {}
+        ~BulbCollection() {
+
+            for(auto it = loadedBulbs.begin(); it != loadedBulbs.end(); ++it) {
+                if(it->second != NULL) {
+                    delete (it->second);
+                    it->second = NULL;
+                }
+            }
+
+        }
+        std::unordered_map<std::string, Bulb*> loadedBulbs;
+
+        int loadBulb(const std::string& fileName) {
+
+            const auto it = loadedBulbs.find(fileName);
+
+            if(it != loadedBulbs.end()) {
+                return 0; // File already loaded
+            }
+
+            // TODO: make sure fileName has a .bul extension.
+
+            Bulb* newBulb = new Bulb();
+            std::string filePath = "lights/" + fileName;
+            const int retVal = newBulb->loadBulb(filePath);
+
+            if(retVal == 0) {
+                loadedBulbs[fileName] = newBulb;
+            }
+
+            return 0;
+
+        }
+
 };
 
 // And this (When it's written) will be for a collection of bulbs.

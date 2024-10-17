@@ -68,6 +68,8 @@ bool MainWindow::registerSelf(HINSTANCE hInstance) {
 
 bool MainWindow::createWindow(HINSTANCE hInstance) {
 
+    bulbCollection.loadBulb("redbulb.bul");
+
     if(window) {
         return true; // Already created.
     }

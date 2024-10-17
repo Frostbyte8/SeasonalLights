@@ -106,7 +106,7 @@ class MainWindow {
         std::vector<BulbType>           rightBulbs;
         std::vector<BulbType>           cornerBulbs;
         */
-
+        BulbCollection                  bulbCollection;
 };
 
 
