@@ -68,7 +68,7 @@ bool MainWindow::registerSelf(HINSTANCE hInstance) {
 
 bool MainWindow::createWindow(HINSTANCE hInstance) {
 
-    bulbCollection.loadBulb("redbulb.bul");
+    bulbCollection.loadBulb("Bulb.bul");
 
     if(window) {
         return true; // Already created.
@@ -251,13 +251,19 @@ bool MainWindow::InitDirect2D() {
 
 void MainWindow::loadGIF() {
 
-    bulb.loadBulb("Lights\\RedBulb.bul");
-    bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
+    const Bulb* bulb = bulbCollection.getBulbByID("Bulb.bul", wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
+
+    if(!bulb) {
+        return;
+    }
+
+    //bulb.loadBulb("Lights\\RedBulb.bul");
+    //bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
     
     // TODO: Move this to it's own function
 
-    const std::vector<BulbInfo>& bulbInfoVec = bulb.getBulbInfoVec();
-    const std::vector<unsigned __int32> cornerIDs = bulb.getCornerIDsVec();
+    const std::vector<BulbInfo>& bulbInfoVec = bulb->getBulbInfoVec();
+    const std::vector<unsigned __int32> cornerIDs = bulb->getCornerIDsVec();
     
     RECT rc;
     GetClientRect(window, &rc);
@@ -285,7 +291,7 @@ void MainWindow::loadGIF() {
     for(int currentSide = 0; currentSide <= 3; ++currentSide) {
 
         const bool useWidth = (currentSide == SideID::TOP || currentSide == SideID::BOTTOM) ? true : false;
-        const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(currentSide);
+        const std::vector<unsigned __int32> sideIDs = bulb->getSideIDsVec(currentSide);
         int currentFrame = 0;
         do {
 
@@ -356,9 +362,9 @@ void MainWindow::loadGIF() {
 
 bool MainWindow::OnPaint() {
 
-    if(sideBulbs[0][0].bulbInfo == NULL || sideBulbs[0][0].bulbInfo->frames.empty()) {
-        return true;
-    }
+    //if(sideBulbs[0][0].bulbInfo == NULL || sideBulbs[0][0].bulbInfo->frames.empty()) {
+    //    return true;
+    //}
 
     /*
     if(gifFrames.empty()) {
@@ -451,7 +457,12 @@ bool MainWindow::OnPaint() {
 
     }
 
+    // TODO: Figure out which corner bulbs have bulbs.
+
+    /*
+
     // Top Left
+
     const BulbInfo* bi = cornerBulbs[CornerID::TOP_LEFT].bulbInfo;
     unsigned __int8 currentFrame = cornerBulbs[CornerID::TOP_LEFT].currentFrame;
 
@@ -492,6 +503,7 @@ bool MainWindow::OnPaint() {
     dest.bottom = dest.top + bi->height;
 
     dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
+    */
         
     HRESULT status = dxInfo->dc->EndDraw();
     IS_OK(status);
@@ -544,6 +556,12 @@ void MainWindow::updateBulbs() {
 
             }
         }
+    }
+
+    // TODO
+
+    if(cornerBulbs.empty()) {
+        return;
     }
 
     for(size_t currentCorner = 0; currentCorner <= 3; ++ currentCorner) {

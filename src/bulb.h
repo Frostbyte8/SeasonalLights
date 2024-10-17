@@ -50,6 +50,10 @@ class Bulb {
         
         int loadBulb(const std::string& filePath);
         void initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, ID2D1DeviceContext* dc);
+
+        bool isInit() {
+            return !d2dData.empty();
+        }
         
         std::vector<unsigned __int32>               cornerIDVec;
         std::vector<unsigned __int32>               sideIDs[4];
@@ -102,6 +106,21 @@ class BulbCollection {
 
             return 0;
 
+        }
+
+        const Bulb* getBulbByID(const std::string& ID, IWICImagingFactory* factory, IWICBitmapDecoder* decoder, ID2D1DeviceContext* dc) {
+           
+            auto it = loadedBulbs.find(ID);
+
+            if(it == loadedBulbs.end()) {
+                return NULL;
+            }
+
+            if(!it->second->isInit()) {
+                it->second->initBitmaps(factory, decoder, dc);
+            }
+
+            return it->second;
         }
 
 };
