@@ -141,7 +141,7 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                     ID2D1Bitmap* tempBMP;
                     dc->CreateBitmapFromWicBitmap(*(&formatConverter), NULL, &tempBMP);
 
-                    D2D1_POINT_2U dest = { frameX.intVal , frameY.intVal };
+                    D2D1_POINT_2U dest = { frameX.uintVal , frameY.uintVal };
                     
                     bitmap->CopyFromBitmap(&dest, tempBMP, NULL);
                     tempBMP->Release();
@@ -181,9 +181,9 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
 void Bulb::destroyBitmaps() {
 
-    for(int i = 0; i < d2dData.size(); ++i) {
+    for(size_t i = 0; i < d2dData.size(); ++i) {
         
-        for(int k = 0; k < d2dData[i].frames.size(); ++k) {
+        for(size_t k = 0; k < d2dData[i].frames.size(); ++k) {
             if(d2dData[i].frames[k] != NULL) {
                 d2dData[i].frames[k]->Release();
                 d2dData[i].frames[k] = NULL;
