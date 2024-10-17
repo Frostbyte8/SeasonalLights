@@ -48,13 +48,19 @@ const std::vector<unsigned __int32>& Bulb::getCornerIDsVec() const {
 ///----------------------------------------------------------------------------
 
 const std::vector<unsigned __int32>& Bulb::getSideIDsVec(const int& side) const {
-    assert(side >= SideID::TOP && side <= SideID::BOTTOM);
+    assert(side >= SideID::TOP && side <= SideID::LEFT);
     return sideIDs[side];
 }
 
 //=============================================================================
 // Functions
 //=============================================================================
+
+///----------------------------------------------------------------------------
+/// initBitmaps - Takes the loaded gif Data, and converts them into D2DBitmaps.
+/// If it is recalled, it destroys the bitmaps and recreates them. This is
+/// useful if Direct2D needs to reinitalize itself.
+///----------------------------------------------------------------------------
 
 void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, ID2D1DeviceContext* dc) {
 
@@ -67,33 +73,33 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
     // TOOD: Error Checking
     const size_t numGifs = imageData.size();
 
-    for(size_t i = 0; i < numGifs; ++i) {
+    for(size_t curGif = 0; curGif < numGifs; ++curGif) {
 
         HRESULT hr = factory->CreateStream(&imageStream);   
         BulbInfo bi;
 
-        if(imageData[i].data != NULL) {
+        if(imageData[curGif].data != NULL) {
 
             // Copy the iamge data into a IWIC stream that we will then use to convert this into
             // a series of D2D Bitmaps
-            hr = imageStream->InitializeFromMemory((BYTE *)imageData[i].data, imageData[i].size);
+            hr = imageStream->InitializeFromMemory((BYTE *)imageData[curGif].data, imageData[curGif].size);
             hr = factory->CreateDecoderFromStream(imageStream, NULL, WICDecodeMetadataCacheOnDemand, &decoder);
 
             UINT numFrames;
             decoder->GetFrameCount(&numFrames);
 
-            bi.width  = imageData[i].width;
-            bi.height = imageData[i].height;
+            bi.width  = imageData[curGif].width;
+            bi.height = imageData[curGif].height;
 
             // Extract individual frames
             // TODO: Sprite Sheets instead of using a bitmap for every gif frame
 
-            for (size_t k = 0; k < numFrames; ++k) {
+            for (size_t curFrame = 0; curFrame < numFrames; ++curFrame) {
 
                 IWICBitmapFrameDecode*      decodedFrame = NULL;
                 IWICMetadataQueryReader*    decodedMeta = NULL;
             
-                decoder->GetFrame(k, &decodedFrame);
+                decoder->GetFrame(curFrame, &decodedFrame);
                 factory->CreateFormatConverter(&formatConverter);
                 formatConverter->Initialize(decodedFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0, WICBitmapPaletteTypeCustom);
 
@@ -105,10 +111,12 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                 decodedFrame->GetSize(&frameWidth, &frameHeight);
 
                 // Check to see if this frame is smaller than the gif image itself, it may be "replace" style gif.
-                if(k != 0 && (frameWidth != bi.width || frameHeight != bi.height) ) {
+                if(curFrame != 0 && (frameWidth != bi.width || frameHeight != bi.height) ) {
                    
                     // Get the Left and Top positions of the frame, and then
-                    // use that information to replace pixels in the previous frame.
+                    // use the previous frame as a base for this frame, and replace
+                    // the changed pixels.
+
                     decodedFrame->GetMetadataQueryReader(&decodedMeta);
 
                     PROPVARIANT frameX;
@@ -119,7 +127,7 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                     decodedMeta->GetMetadataByName(L"/imgdesc/Left", &frameX);
                     decodedMeta->GetMetadataByName(L"/imgdesc/Top", &frameY);
 
-                    ID2D1Bitmap* prevFrame = bi.frames[k-1];
+                    ID2D1Bitmap* prevFrame = bi.frames[curFrame-1];
                     D2D1_SIZE_U prevSize = { bi.width, bi.height };
                     FLOAT dpiX;
                     FLOAT dpiY;
@@ -167,6 +175,10 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
 
 }
 
+///----------------------------------------------------------------------------
+/// destroyBitmaps - Release resources used by any bitmaps that were created
+///----------------------------------------------------------------------------
+
 void Bulb::destroyBitmaps() {
 
     for(int i = 0; i < d2dData.size(); ++i) {
@@ -184,6 +196,10 @@ void Bulb::destroyBitmaps() {
     d2dData.clear();
     
 }
+
+///----------------------------------------------------------------------------
+/// loadBulb - Read a .bul file into memory.
+///----------------------------------------------------------------------------
 
 int Bulb::loadBulb(const std::string& filePath) {
 
@@ -241,22 +257,22 @@ int Bulb::loadBulb(const std::string& filePath) {
 
     // Read and Cache GIF Data
 
-    for(int i = 0; i < 37; ++i) {
+    for(int curFrames = 0; curFrames < 37; ++curFrames) {
 
         GIFData gifData;
 
-        if(lookupTable[i].offset != 0) {
+        if(lookupTable[curFrames].offset != 0) {
             
 
-            fseek(fp, lookupTable[i].offset, SEEK_SET);
+            fseek(fp, lookupTable[curFrames].offset, SEEK_SET);
             
-            gifData.size    = lookupTable[i].size;
+            gifData.size    = lookupTable[curFrames].size;
             gifData.data    = (unsigned __int8*)malloc(gifData.size);
             fread(&gifData.data[0], sizeof(unsigned __int8), gifData.size, fp);
             gifData.width   = *reinterpret_cast<unsigned __int16*>(&gifData.data[6]);
             gifData.height   = *reinterpret_cast<unsigned __int16*>(&gifData.data[8]);
 
-            validIDs.push_back(i);
+            validIDs.push_back(curFrames);
             
         }
 
@@ -269,8 +285,6 @@ int Bulb::loadBulb(const std::string& filePath) {
         // File is not a bulb or is corrupt.
         return -1;
     }
-
-    // Create D2D Bitmaps from Gif Data
 
     return 0;
 }

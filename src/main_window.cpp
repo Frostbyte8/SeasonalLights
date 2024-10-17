@@ -310,9 +310,9 @@ void MainWindow::loadGIF() {
     bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::TOP_RIGHT]];
     cornerBulbs.push_back(bulbType);
 
-    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]];
-    cornerBulbs.push_back(bulbType);
     bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_RIGHT]];
+    cornerBulbs.push_back(bulbType);
+    bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]];
     cornerBulbs.push_back(bulbType);
     
 }
@@ -342,12 +342,8 @@ bool MainWindow::OnPaint() {
 
     for(int currentSide = 0; currentSide <= 3; ++currentSide) {
 
-        
-
         FLOAT posOffset = (maxSideLength[currentSide] - sideLength[currentSide]) / 2;
-        //posOffset += sideBulbs[currentSide][0].bulbInfo->width;
-
-        D2D1_RECT_F dest;
+        D2D1_RECT_F dest ={ 0, 0, 0, 0 };
         
         // TODO: Widest/Tallest Bulb
 
@@ -387,19 +383,22 @@ bool MainWindow::OnPaint() {
         for(int curBulb = 0; curBulb < numBulbs; ++curBulb) {
 
             const BulbInfo* bi = sideBulbs[currentSide][curBulb].bulbInfo;
+            const BulbInfo* nextBulb = (curBulb + 1 < numBulbs) ? sideBulbs[currentSide][curBulb + 1].bulbInfo : NULL;
             const unsigned __int8 currentFrame = sideBulbs[currentSide][curBulb].currentFrame;
            
             // Certain offsets are incorrect with bulbs with mixed dimensions
 
             dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
             
-            if(currentSide == SideID::TOP || currentSide == SideID::BOTTOM) {
-                dest.right += bi->width;
-                dest.left += bi->width;
-            }
-            else {
-                dest.top += bi->height;
-                dest.bottom += bi->height;
+            if(nextBulb) {
+                if(currentSide == SideID::TOP || currentSide == SideID::BOTTOM) {
+                    dest.left = dest.right;
+                    dest.right += nextBulb->width;
+                }
+                else {
+                    dest.top = dest.bottom;
+                    dest.bottom += nextBulb->height;
+                }
             }
 
         }

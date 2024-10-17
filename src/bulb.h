@@ -36,8 +36,8 @@ enum CornerID {
 enum SideID {
     TOP,
     RIGHT,
-    LEFT,
     BOTTOM,
+    LEFT,
 };
 
 // This is the Bulb Data
