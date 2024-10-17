@@ -1,0 +1,5 @@
+#include "resource.h"
+
+IDI_APPICON ICON    "app_icon.ico"
+
+// "In the 90s, computers would scream every time you went online. That was foreshadowing." - Soul Nate.

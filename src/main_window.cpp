@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "resources\resource.h"
 
 const std::wstring MainWindow::className = std::wstring(L"HolidayLightsMainWindow");
 #define IS_OK(x) if(x != S_OK) { return false; }
@@ -35,7 +36,7 @@ bool MainWindow::initCOM() {
 
 bool MainWindow::registerSelf(HINSTANCE hInstance) {
     
-    WNDCLASSEX wc;
+    WNDCLASSEX wc ={ 0 };
 
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = CS_HREDRAW | CS_VREDRAW;
@@ -43,12 +44,12 @@ bool MainWindow::registerSelf(HINSTANCE hInstance) {
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInstance;
-    wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIcon         = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON));
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wc.lpszMenuName  = NULL;
     wc.lpszClassName = MainWindow::className.c_str();
-    wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hIconSm       = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON));
 
     if(!RegisterClassEx(&wc)) {
         MessageBox(NULL, L"Error registering window class.", L"Error", MB_OK | MB_ICONERROR);
@@ -388,6 +389,8 @@ bool MainWindow::OnPaint() {
             const BulbInfo* bi = sideBulbs[currentSide][curBulb].bulbInfo;
             const unsigned __int8 currentFrame = sideBulbs[currentSide][curBulb].currentFrame;
            
+            // Certain offsets are incorrect with bulbs with mixed dimensions
+
             dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
             
             if(currentSide == SideID::TOP || currentSide == SideID::BOTTOM) {
