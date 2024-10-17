@@ -48,10 +48,20 @@ struct BulbT {
     BulbT() : bulbInfo(NULL), currentFrame(0) {}
 };
 
+namespace BlinkMode {
+    enum blinkMode {
+        DONT,
+        TOGETHER,
+        ALTERNATING,
+        CHASE,
+        RANDOM,
+    };
+}
+
 class MainWindow {
 
     public:
-        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL) {}
+        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL), blinkMode(BlinkMode::ALTERNATING), waitTime(250) {}
         
         ~MainWindow() {
             delete dxInfo;
@@ -86,6 +96,8 @@ class MainWindow {
 
         LONG                            maxSideLength[4];
         LONG                            sideLength[4];
+        unsigned __int32                blinkMode;
+        LONG                            waitTime;
 
         /*
         std::vector<BulbType>           topBulbs;

@@ -90,7 +90,7 @@ bool MainWindow::createWindow(HINSTANCE hInstance) {
 
 UINT MainWindow::doLoop() {
     
-    SetTimer(window, 0, 250, NULL);
+    SetTimer(window, 0, waitTime, NULL);
 
     MSG msg;
 
@@ -244,7 +244,7 @@ bool MainWindow::InitDirect2D() {
 
 void MainWindow::loadGIF() {
 
-    bulb.loadBulb("D:\\dump\\13.bul");
+    bulb.loadBulb("Lights\\RedBulb.bul");
     bulb.initBitmaps(wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
     
     // TODO: Move this to it's own function
@@ -279,7 +279,7 @@ void MainWindow::loadGIF() {
 
         const bool useWidth = (currentSide == SideID::TOP || currentSide == SideID::BOTTOM) ? true : false;
         const std::vector<unsigned __int32> sideIDs = bulb.getSideIDsVec(currentSide);
-
+        int currentFrame = 0;
         do {
 
             BulbT bulbType;
@@ -302,6 +302,32 @@ void MainWindow::loadGIF() {
 
         } while (true);
 
+    }
+
+    if(blinkMode == BlinkMode::ALTERNATING) {
+        for(int currentSide = 0; currentSide <= 3; ++currentSide) {
+
+            if(sideBulbs[currentSide].empty()) {
+                continue;
+            }
+
+            const size_t numBulbs = sideBulbs[currentSide].size();
+            
+            __int8 currentFrame = 0;
+
+            for(size_t curBulb = 0; curBulb < numBulbs; ++curBulb) {
+
+                sideBulbs[currentSide][curBulb].currentFrame = currentFrame;
+                currentFrame++;
+
+                // TODO: This only works if all the bulbs are the same, so
+                // when it's time, figure that out too.
+                if (sideBulbs[currentSide][curBulb].bulbInfo->frames.size() <= currentFrame) {
+                    currentFrame = 0;
+                }
+
+            }
+        }
     }
 
     BulbT bulbType;
@@ -338,39 +364,54 @@ bool MainWindow::OnPaint() {
 
     RECT rc;
     GetClientRect(window, &rc);
-
-
+    
     for(int currentSide = 0; currentSide <= 3; ++currentSide) {
+
+        if(sideBulbs[currentSide].empty()) {
+            continue;
+        }
 
         FLOAT posOffset = (maxSideLength[currentSide] - sideLength[currentSide]) / 2;
         D2D1_RECT_F dest ={ 0, 0, 0, 0 };
         
-        // TODO: Widest/Tallest Bulb
-
+        // Offset the X/Y position by the width/height of the corner bulb, if it exists.
+ 
         switch (currentSide) {
 
             case SideID::TOP:
                 dest.top = 0;
                 dest.left = posOffset;
-                dest.left += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->width;
+
+                if(cornerBulbs[CornerID::TOP_LEFT].bulbInfo)  {
+                    dest.left += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->width;
+                }
+
                 break;
 
             case SideID::BOTTOM:
                 dest.top = (rc.bottom - rc.top) - sideBulbs[currentSide][0].bulbInfo->height;
                 dest.left = posOffset;
-                dest.left += cornerBulbs[CornerID::BOTTOM_LEFT].bulbInfo->width;
+
+                if(cornerBulbs[CornerID::BOTTOM_LEFT].bulbInfo)  {
+                    dest.left += cornerBulbs[CornerID::BOTTOM_LEFT].bulbInfo->width;
+                }
                 break;
 
             case SideID::LEFT:
                 dest.top = posOffset;
                 dest.left = 0;
-                dest.top += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->height;
+
+                if(cornerBulbs[CornerID::TOP_LEFT].bulbInfo) {
+                    dest.top += cornerBulbs[CornerID::TOP_LEFT].bulbInfo->height;
+                }
                 break;
 
             case SideID::RIGHT:
                 dest.top = posOffset;
                 dest.left = (rc.right - rc.left) - sideBulbs[currentSide][0].bulbInfo->width;
-                dest.top += cornerBulbs[CornerID::TOP_RIGHT].bulbInfo->height;
+                if(cornerBulbs[CornerID::TOP_RIGHT].bulbInfo) {
+                    dest.top += cornerBulbs[CornerID::TOP_RIGHT].bulbInfo->height;
+                }
                 break;
 
         }
@@ -386,8 +427,6 @@ bool MainWindow::OnPaint() {
             const BulbInfo* nextBulb = (curBulb + 1 < numBulbs) ? sideBulbs[currentSide][curBulb + 1].bulbInfo : NULL;
             const unsigned __int8 currentFrame = sideBulbs[currentSide][curBulb].currentFrame;
            
-            // Certain offsets are incorrect with bulbs with mixed dimensions
-
             dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
             
             if(nextBulb) {
@@ -518,7 +557,7 @@ LRESULT MainWindow::windowProc(const UINT& msg, const WPARAM wParam, const LPARA
         case WM_TIMER:
             updateBulbs();
             InvalidateRect(window, NULL, TRUE);
-            SetTimer(window, 0, 100, NULL);
+            SetTimer(window, 0, waitTime, NULL);
             break;
 
         case WM_CLOSE:
