@@ -6,7 +6,7 @@ Seasonal Lights is a modern clone of Holiday Lights that works on newer versions
 
 **Note:** This is very beta software at the moment, as I wanted to get this out in time for at least the Christmas Season 2024. I will try to get this in full for next year! Check back in 2025.
 
-![Screenshot of Seasonal Lights](screenshot.png "Optional Title")
+![Screenshot of Seasonal Lights](screenshot.png "Screenshot")
 
 ## Current Features
 
