@@ -103,6 +103,10 @@ class BulbCollection {
             if(retVal == 0) {
                 loadedBulbs[fileName] = newBulb;
             }
+            else {
+                delete newBulb;
+                newBulb = NULL;
+            }
 
             return 0;
 

@@ -99,7 +99,7 @@ void Bulb::initBitmaps(IWICImagingFactory* factory, IWICBitmapDecoder* decoder, 
                 IWICBitmapFrameDecode*      decodedFrame = NULL;
                 IWICMetadataQueryReader*    decodedMeta = NULL;
             
-                decoder->GetFrame(curFrame, &decodedFrame);
+                decoder->GetFrame(static_cast<UINT>(curFrame), &decodedFrame);
                 factory->CreateFormatConverter(&formatConverter);
                 formatConverter->Initialize(decodedFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.0, WICBitmapPaletteTypeCustom);
 

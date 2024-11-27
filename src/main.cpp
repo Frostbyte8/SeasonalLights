@@ -29,8 +29,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     // Load assets requires InitDirect2D, 
-    mainWindow.loadAssets();
+    if(!mainWindow.loadAssets()) {
+        MessageBox(NULL, L"Unable to load Bulb.bul. The file is missing or corrupt.", L"Bulb.bul not found", MB_OK | MB_ICONERROR);
+        return 0;
+    }
 
     return mainWindow.doLoop();
-
 }

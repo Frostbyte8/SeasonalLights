@@ -95,7 +95,7 @@ bool MainWindow::createWindow(HINSTANCE hInstance) {
 // doLoop - Standard run of the mill message loop
 //-----------------------------------------------------------------------------
 
-UINT MainWindow::doLoop() {
+WPARAM MainWindow::doLoop() {
     
     SetTimer(window, 0, waitTime, NULL);
 
@@ -118,7 +118,9 @@ UINT MainWindow::doLoop() {
 bool MainWindow::loadAssets() {
     // TODO: load Assets should just load the GIF data, and then after
     // D2D is ready to go, then create the Bitmaps.
-    loadGIF();
+    if(!loadGIF()) {
+        return false;
+    }
     initBulbs();
     return true;
 }
@@ -249,12 +251,12 @@ bool MainWindow::InitDirect2D() {
 // loadGIF - Convert's GIFs to Direct2D Bitmaps. Mostly just for debugging.
 //-----------------------------------------------------------------------------
 
-void MainWindow::loadGIF() {
+bool MainWindow::loadGIF() {
 
     const Bulb* bulb = bulbCollection.getBulbByID("Bulb.bul", wicFactory.Get(), gifDecoder.Get(), dxInfo->dc.Get());
 
-    if(!bulb) {
-        return;
+    if(!bulb) {   
+        return false;
     }
 
     //bulb.loadBulb("Lights\\RedBulb.bul");
@@ -354,6 +356,7 @@ void MainWindow::loadGIF() {
     bulbType.bulbInfo = &bulbInfoVec[cornerIDs[CornerID::BOTTOM_LEFT]];
     cornerBulbs.push_back(bulbType);
     
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -459,7 +462,7 @@ bool MainWindow::OnPaint() {
 
     // TODO: Figure out which corner bulbs have bulbs.
 
-    /*
+    
 
     // Top Left
 
@@ -503,7 +506,7 @@ bool MainWindow::OnPaint() {
     dest.bottom = dest.top + bi->height;
 
     dxInfo->dc->DrawBitmap(bi->frames[currentFrame], &dest);
-    */
+    
         
     HRESULT status = dxInfo->dc->EndDraw();
     IS_OK(status);

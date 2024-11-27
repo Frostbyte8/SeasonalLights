@@ -61,7 +61,7 @@ namespace BlinkMode {
 class MainWindow {
 
     public:
-        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL), blinkMode(BlinkMode::RANDOM), waitTime(250) {}
+        MainWindow() : dxInfo(NULL), wicFactory(NULL), gifDecoder(NULL), window(NULL), blinkMode(BlinkMode::ALTERNATING), waitTime(250) {}
         
         ~MainWindow() {
             delete dxInfo;
@@ -71,7 +71,7 @@ class MainWindow {
         bool initCOM();
         bool registerSelf(HINSTANCE hInstance);
         bool createWindow(HINSTANCE hInstance);
-        UINT doLoop();
+        WPARAM doLoop();
         static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
         void setInitalSize();
         bool InitDirect2D();
@@ -81,8 +81,10 @@ class MainWindow {
         void initBulbs();
         void updateBulbs();
 
+        const HWND getHandle() const {return window;}
+
     private:
-        void loadGIF();
+        bool loadGIF();
         LRESULT windowProc(const UINT& msg, const WPARAM wParam, const LPARAM lParam);
         HWND    window;
         DXInfo* dxInfo;
