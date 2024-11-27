@@ -2,7 +2,7 @@
 
 Miss the old Holiday Lights program? Can't get it to work on Windows 10 and later?
 
-Seasonal Lights is a modern clone of Holiday Lights that works on newer versions of Windows.
+Seasonal Lights is a modern clone of Holiday Lights by Tiger Technologies that works on newer versions of Windows.
 
 **Note:** This is very beta software at the moment, as I wanted to get this out in time for at least the Christmas Season 2024. I will try to get this in full for next year! Check back in 2025.
 
@@ -15,6 +15,7 @@ Seasonal Lights is a modern clone of Holiday Lights that works on newer versions
   - Remember, you can have up to 8 bulb images per side, that should hopefully help.
 - Works only on your primary monitor.
 - For now: Updates at 250ms.
+- You will still have to use Holiday Lights to make bulbs.
 
 ## Eventual Features 
 
