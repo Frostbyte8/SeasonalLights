@@ -74,7 +74,16 @@ bool MainWindow::createWindow(HINSTANCE hInstance) {
         return true; // Already created.
     }
 
+    /*
     window = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOPMOST,
+        MainWindow::className.c_str(),
+        L"",
+        WS_VISIBLE | WS_POPUP,
+        CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
+        NULL, NULL, hInstance, this);
+    */
+
+    window = CreateWindowEx(WS_EX_TRANSPARENT | WS_EX_LAYERED,
         MainWindow::className.c_str(),
         L"",
         WS_VISIBLE | WS_POPUP,
